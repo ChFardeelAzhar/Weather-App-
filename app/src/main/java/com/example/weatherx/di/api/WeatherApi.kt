@@ -1,6 +1,7 @@
 package com.example.weatherx.di.api
 
 import com.example.weatherx.models.WeatherModel
+import com.example.weatherx.utils.API_KEY
 import com.example.weatherx.utils.ResultState
 import retrofit2.Response
 import retrofit2.http.GET
@@ -13,7 +14,9 @@ interface WeatherApi {
 
     @GET("v1/current.json")
     suspend fun getCurrentWeather(
-        @Query("key") apiKey: String,
-        @Query("q") city : String,
+        @Query("key") apiKey: String? = API_KEY,
+        @Query("q") city: String?,
     ): Response<WeatherModel>
+
+
 }
