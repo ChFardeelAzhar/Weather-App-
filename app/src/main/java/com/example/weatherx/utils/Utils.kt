@@ -10,6 +10,18 @@ import com.example.weatherx.ui.theme.SnowyMainCardColor
 import com.example.weatherx.ui.theme.SnowyTransMainCardColor
 import com.example.weatherx.ui.theme.SunnyMainCardColor
 import com.example.weatherx.ui.theme.SunnySingleCardColor
+import com.example.weatherx.ui.theme.SunnySearchBarBg
+import com.example.weatherx.ui.theme.SunnySearchBarText
+import com.example.weatherx.ui.theme.SunnySearchBarBorder
+import com.example.weatherx.ui.theme.RainySearchBarBg
+import com.example.weatherx.ui.theme.RainySearchBarText
+import com.example.weatherx.ui.theme.RainySearchBarBorder
+import com.example.weatherx.ui.theme.SnowySearchBarBg
+import com.example.weatherx.ui.theme.SnowySearchBarText
+import com.example.weatherx.ui.theme.SnowySearchBarBorder
+import com.example.weatherx.ui.theme.CloudySearchBarBg
+import com.example.weatherx.ui.theme.CloudySearchBarText
+import com.example.weatherx.ui.theme.CloudySearchBarBorder
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +71,75 @@ fun getCurrentIcon(condition: String): Int {
                 condition.contains("Fog", ignoreCase = true) -> R.drawable.single_cloud
 
         else -> R.drawable.single_cloud // Default if no match
+    }
+}
+
+fun getSearchBarBackgroundColor(condition: String): Color {
+    return when {
+        condition.contains("Sunny", ignoreCase = true) ||
+                condition.contains("Fair", ignoreCase = true) ||
+                condition.contains("Clear", ignoreCase = true) -> SunnySearchBarBg
+
+        condition.contains("Rain", ignoreCase = true) ||
+                condition.contains("Drizzle", ignoreCase = true) ||
+                condition.contains("Showers", ignoreCase = true) -> RainySearchBarBg
+
+        condition.contains("Snow", ignoreCase = true) ||
+                condition.contains("Sleet", ignoreCase = true) ||
+                condition.contains("Blizzard", ignoreCase = true) -> SnowySearchBarBg
+
+        condition.contains("Cloudy", ignoreCase = true) ||
+                condition.contains("Overcast", ignoreCase = true) ||
+                condition.contains("Mist", ignoreCase = true) ||
+                condition.contains("Fog", ignoreCase = true) -> CloudySearchBarBg
+
+        else -> CloudySearchBarBg // Default
+    }
+}
+
+fun getSearchBarTextColor(condition: String): Color {
+    return when {
+        condition.contains("Sunny", ignoreCase = true) ||
+                condition.contains("Fair", ignoreCase = true) ||
+                condition.contains("Clear", ignoreCase = true) -> SunnySearchBarText
+
+        condition.contains("Rain", ignoreCase = true) ||
+                condition.contains("Drizzle", ignoreCase = true) ||
+                condition.contains("Showers", ignoreCase = true) -> RainySearchBarText
+
+        condition.contains("Snow", ignoreCase = true) ||
+                condition.contains("Sleet", ignoreCase = true) ||
+                condition.contains("Blizzard", ignoreCase = true) -> SnowySearchBarText
+
+        condition.contains("Cloudy", ignoreCase = true) ||
+                condition.contains("Overcast", ignoreCase = true) ||
+                condition.contains("Mist", ignoreCase = true) ||
+                condition.contains("Fog", ignoreCase = true) -> CloudySearchBarText
+
+        else -> CloudySearchBarText // Default
+    }
+}
+
+fun getSearchBarBorderColor(condition: String): Color {
+    return when {
+        condition.contains("Sunny", ignoreCase = true) ||
+                condition.contains("Fair", ignoreCase = true) ||
+                condition.contains("Clear", ignoreCase = true) -> SunnySearchBarBorder
+
+        condition.contains("Rain", ignoreCase = true) ||
+                condition.contains("Drizzle", ignoreCase = true) ||
+                condition.contains("Showers", ignoreCase = true) -> RainySearchBarBorder
+
+        condition.contains("Snow", ignoreCase = true) ||
+                condition.contains("Sleet", ignoreCase = true) ||
+                condition.contains("Blizzard", ignoreCase = true) -> SnowySearchBarBorder
+
+        condition.contains("Cloudy", ignoreCase = true) ||
+                condition.contains("Overcast", ignoreCase = true) ||
+                condition.contains("Mist", ignoreCase = true) ||
+                condition.contains("Fog", ignoreCase = true) -> CloudySearchBarBorder
+
+        else -> CloudySearchBarBorder // Default
     }
 }
 

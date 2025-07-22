@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +63,9 @@ import com.example.weatherx.utils.formatDateTime
 import com.example.weatherx.utils.getBackgroundForCondition
 import com.example.weatherx.utils.getCurrentIcon
 import com.example.weatherx.utils.getMainCardColor
+import com.example.weatherx.utils.getSearchBarBackgroundColor
+import com.example.weatherx.utils.getSearchBarBorderColor
+import com.example.weatherx.utils.getSearchBarTextColor
 import com.example.weatherx.utils.getSingleCardColor
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -146,6 +151,7 @@ fun WeatherScreen(
                     CitySearchBar(
                         modifier = Modifier,
                         cityName = cityName,
+                        weatherCondition = weatherCondition.value,
                         onSearchClick = {
                             getCurrentIcon(weatherCondition.value)
                             getBackgroundForCondition(weatherCondition.value)
@@ -231,35 +237,63 @@ fun DefaultBackground(modifier: Modifier = Modifier, bgImage: MutableState<Int>)
 fun CitySearchBar(
     modifier: Modifier = Modifier,
     cityName: MutableState<String>,
+    weatherCondition: String,
     onSearchClick: (String) -> Unit
 ) {
+    val keyboardController = LocalSoftwareKeyboardController.current
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
 
-        // Search bar with rounded corners
+        // Search bar with rounded corners and dynamic colors
         OutlinedTextField(
             value = cityName.value,
             onValueChange = { cityName.value = it },
-            placeholder = { Text("Search City") },
+            placeholder = { 
+                Text(
+                    "Search City",
+                    color = getSearchBarTextColor(weatherCondition).copy(alpha = 0.6f)
+                )
+            },
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .background(
+                    color = getSearchBarBackgroundColor(weatherCondition),
+                    shape = RoundedCornerShape(30.dp)
+                ),
             shape = RoundedCornerShape(30.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = getSearchBarBackgroundColor(weatherCondition),
+                unfocusedContainerColor = getSearchBarBackgroundColor(weatherCondition),
+                focusedBorderColor = getSearchBarBorderColor(weatherCondition),
+                unfocusedBorderColor = getSearchBarBorderColor(weatherCondition).copy(alpha = 0.5f),
+                focusedTextColor = getSearchBarTextColor(weatherCondition),
+                unfocusedTextColor = getSearchBarTextColor(weatherCondition)
+            ),
             trailingIcon = {
                 IconButton(
                     onClick = {
                         if (cityName.value.isNotEmpty()) {
                             onSearchClick(cityName.value)
+                            // Clear text to help dismiss keyboard
+                            cityName.value = ""
                         }
-
+                        keyboardController?.hide()
                     }
                 ) {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = getSearchBarBorderColor(weatherCondition)
+                    )
                 }
             },
-            textStyle = TextStyle(color = Color.DarkGray.copy(alpha = 0.7f))
+            textStyle = TextStyle(
+                color = getSearchBarTextColor(weatherCondition),
+                fontSize = 16.sp
+            )
         )
 
     }
@@ -279,8 +313,8 @@ fun MainCardContainer(
         Card(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            elevation = CardDefaults.cardElevation(4.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+            ,
             colors = CardDefaults.cardColors(containerColor = color),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -366,7 +400,8 @@ fun MainCardContainer(
                         text = data.location.name,
                         color = Color.White,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2
                     )
 
                     Spacer(Modifier.size(5.dp))
@@ -414,7 +449,6 @@ fun HourlyWeatherDetailCard(hourlyData: List<HourlyWeatherData>) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(20.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.elevatedCardColors(containerColor = SkyCloudColor),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -494,7 +528,6 @@ fun WeatherConditions(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape = RoundedCornerShape(16.dp)),
-        elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = color)
 
     ) {
@@ -557,8 +590,8 @@ fun DetailWeatherCard(weatherData: WeatherModel?, color: Color) {
             ),
             WeatherConditionData(
                 Icons.Outlined.WindPower,
-                "Wind",
-                "${data.current.wind_kph} Km/h"
+                "Wind Speed",
+                "${data.current.wind_kph} km/h"
             ),
             WeatherConditionData(
                 Icons.Outlined.WorkspacePremium,
@@ -568,32 +601,86 @@ fun DetailWeatherCard(weatherData: WeatherModel?, color: Color) {
             WeatherConditionData(
                 Icons.Outlined.WaterDrop,
                 "Humidity",
-                "${data.current.humidity} %"
+                "${data.current.humidity}%"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.Cloud,
+                "Visibility",
+                "${data.current.vis_km} km"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WorkspacePremium,
+                "Pressure",
+                "${String.format("%.1f", data.current.pressure_mb)} mb"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WaterDrop,
+                "Dew Point",
+                "${String.format("%.1f", data.current.dewpoint_c)}°C"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.Cloud,
+                "Cloud Cover",
+                "${data.current.cloud}%"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WindPower,
+                "Wind Direction",
+                "${data.current.wind_dir} (${data.current.wind_degree}°)"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WorkspacePremium,
+                "Heat Index",
+                "${String.format("%.1f", data.current.heatindex_c)}°C"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WindPower,
+                "Wind Gust",
+                "${String.format("%.1f", data.current.gust_kph)} km/h"
+            ),
+            WeatherConditionData(
+                Icons.Outlined.WaterDrop,
+                "Wind Chill",
+                "${String.format("%.1f", data.current.windchill_c)}°C"
             )
         )
 
-
-        Box(
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp) // Fixed height to prevent infinite constraints
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            shape = RoundedCornerShape(20.dp)
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2), // 2 columns
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp), // Space between columns
-                verticalArrangement = Arrangement.spacedBy(8.dp) // Space between rows
+                    .padding(4.dp)
             ) {
-                items(weatherConditions.size) { index ->
-                    val condition = weatherConditions[index]
-                    WeatherConditions(
-                        icon = condition.icon,
-                        title = condition.title,
-                        value = condition.value,
-                        color = color
-                    )
+                // Header
+                Text(
+                    text = "Weather Details",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Enhanced grid layout for more items
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.height(650.dp) // Adjust height for 6 rows
+                ) {
+                    items(weatherConditions.size) { index ->
+                        WeatherConditions(
+                            icon = weatherConditions[index].icon,
+                            title = weatherConditions[index].title,
+                            value = weatherConditions[index].value,
+                            color = color
+                        )
+                    }
                 }
             }
         }
